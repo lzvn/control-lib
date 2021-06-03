@@ -4,6 +4,7 @@ Controller::Controller() {
 	this->state = REST;
 	ProcNode *node = new ProcNode(NULL);
 	this->procs = *node;
+	this->tolerance = 0;
 	this->timer = NULL;
 	this->duration = 0;
 }
@@ -12,14 +13,16 @@ Controller::Controller(Timer *timer) {
 	this->state = REST;
 	ProcNode *node = new ProcNode(NULL);
 	this->procs = *node;
+	this->tolerance = 0;
 	this->timer = timer;
 	this->duration = 0;
 }
 
-Controller::Controller(Timer *timer, Process *proc, unsigned int duration) {
+Controller::Controller(Timer *timer, Process *proc, float tolerance, unsigned int duration) {
 	this->state = REST;
 	ProcNode *node = new ProcNode(proc);
 	this->procs = *node;
+	this->tolerance = tolerance;
 	this->timer = timer;
 	this->duration = duration;
 }
@@ -27,24 +30,64 @@ Controller::Controller(Timer *timer, Process *proc, unsigned int duration) {
 Controller::~Controller() {
 	
 }
+
 //"control of the controller" (aka start, stop, etc)
 boolean Controller::start() {
-	
+	if(status!=REST)
+		return false;
+	if(procs.proc==NULL || timer==NULL)
+		return false;
+
+	status=WORKING;
+	timer->reset();	
+	return run();
 }
 
 boolean Controller::restart() {
-	
+	if(status!=STOPPED)
+		return false;
+
+	timer->restart();
+	status=WORKING;
+	return run();
 }
 
 boolean Controller::stop(){
+	if(status!=WORKING)
+		return false;
+	
+	status=STOPPED;
+	timer->stop();
+	deactivateAll();
+	return true;
 }
 
 void Controller::reset(){
+	status = REST;
+	timer->reset();
+	deactivateAll();
 }
 
 boolean Controller::run(){
+	if(status!=WORKING)
+		return false;
+
+	if(timer->getInterval()==0) {
+		float reading = procs.proc->sensor->read();
+		float ref_value = procs.proc->ref_value;
+		if(reading > ref_value*(1-tolerance) && reading < ref_value*(1+tolerance))
+			timer->start(duration);
+	}
+	if(timer->getInterval()>0 && timer->getTimeLeft()==0) {
+		reset();
+	} else {
+		ProcNode *node = &node;
+		while(node!=null) {
+			node->proc->actuator->act(node->proc->sensor->read());
+			node=node->next;
+		}
+	}
 }
- //updates the state of all processes
 	
 //Manipulation of process (adding, changing, removing or getting them)
 	
@@ -117,7 +160,7 @@ void Controller::rmvProc(unsigned int index){
 	}
 	delete toDelete;
 }
- //delete all auxiliary process too
+
 Process Controller::getProc(unsigned int index){
 	if(procs.proc==NULL) {
 		Process *p = new Process(NULL, NULL, 0);
@@ -147,7 +190,7 @@ unsigned int Controller::getProcsNum(){
 	
 	unsigned int procs_num = 0;
 	ProcNode *node = &procs;
-	while(node->next!=NULL) {
+	while(node!=NULL) {
 		procsNum++;
 		node = node->next;
 	}
@@ -169,3 +212,22 @@ unsigned short Controller::getState(){
 	return state;
 }
 
+float Controller::getTolerance() {
+	return tolerance;
+}
+
+void Controller::setTolerance(float tolerance) {
+	this->tolerance = tolerance;
+}
+
+//private methods
+
+void Controller::deactivateAll() {
+	if(procs.proc==NULL)
+		return;
+	ProcNode *node = &procs;
+	while(node!=NULL) {
+		node->proc->actuator->deactivate();
+		node=node->next;
+	}
+}

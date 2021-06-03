@@ -42,6 +42,11 @@ public:
 	boolean stop();
 	void reset();
 	boolean run(); //updates the state of all processes
+
+	/* think if these are necessary or not
+	   boolean activateActuatorOf(unsigned int index);
+	   boolean deactivateActuatorOf(unsigned int index);
+	 */
 	
 	//Manipulation of process (adding, changing, removing or getting them)
 	//index starts at 0
@@ -58,12 +63,20 @@ public:
 	unsigned int getTimeLeft();
 	unsigned int getDuration();
 	unsigned short getState();
+	float getTolerance(float tolerance);
+	void setTolerance();
 	
 private:
+	/*Linked list of all processes controlled, the first one is considered the 
+	  main process and it is the one used to decide when the timer will be started
+	*/
 	ProcNode procs;
 	Timer *timer;
+	float tolerance;
 	unsigned short state;
 	unsigned int duration;
+
+	void deactivateAll();
 };
 
 #endif
