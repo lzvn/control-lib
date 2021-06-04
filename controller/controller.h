@@ -27,13 +27,17 @@ typedef struct ProcNode{
 		this->proc = proc;
 		this->next = NULL;
 	}
+	ProcNode() {
+		this->proc = NULL;
+		this->next = NULL;
+	}
 };
 
 class Controller {
 public:
 	Controller();
 	Controller(Timer *timer);
-	Controller(Timer *timer, Process *proc, unsigned int duration);
+	Controller(Timer *timer, Process *proc, float tolerance, unsigned int duration);
 	~Controller();
 
 	//"control of the controller" (aka start, stop, etc)
@@ -63,8 +67,8 @@ public:
 	unsigned int getTimeLeft();
 	unsigned int getDuration();
 	unsigned short getState();
-	float getTolerance(float tolerance);
-	void setTolerance();
+	float getTolerance();
+	void setTolerance(float tolerance);
 	
 private:
 	/*Linked list of all processes controlled, the first one is considered the 
@@ -77,6 +81,7 @@ private:
 	unsigned int duration;
 
 	void deactivateAll();
+	void setActuators();
 };
 
 #endif

@@ -2,7 +2,7 @@
 
 Controller::Controller() {
 	this->state = REST;
-	ProcNode *node = new ProcNode(NULL);
+	ProcNode *node = new ProcNode();
 	this->procs = *node;
 	this->tolerance = 0;
 	this->timer = NULL;
@@ -11,7 +11,7 @@ Controller::Controller() {
 
 Controller::Controller(Timer *timer) {
 	this->state = REST;
-	ProcNode *node = new ProcNode(NULL);
+	ProcNode *node = new ProcNode();
 	this->procs = *node;
 	this->tolerance = 0;
 	this->timer = timer;
@@ -33,43 +33,44 @@ Controller::~Controller() {
 
 //"control of the controller" (aka start, stop, etc)
 boolean Controller::start() {
-	if(status!=REST)
+	if(state!=REST)
 		return false;
 	if(procs.proc==NULL || timer==NULL)
 		return false;
 
-	status=WORKING;
-	timer->reset();	
+	state=WORKING;
+	timer->reset();
+	setActuators();
 	return run();
 }
 
 boolean Controller::restart() {
-	if(status!=STOPPED)
+	if(state!=STOPPED)
 		return false;
 
 	timer->restart();
-	status=WORKING;
+	state=WORKING;
 	return run();
 }
 
 boolean Controller::stop(){
-	if(status!=WORKING)
+	if(state!=WORKING)
 		return false;
 	
-	status=STOPPED;
+	state=STOPPED;
 	timer->stop();
 	deactivateAll();
 	return true;
 }
 
 void Controller::reset(){
-	status = REST;
+	state = REST;
 	timer->reset();
 	deactivateAll();
 }
 
 boolean Controller::run(){
-	if(status!=WORKING)
+	if(state!=WORKING)
 		return false;
 
 	if(timer->getInterval()==0) {
@@ -81,8 +82,8 @@ boolean Controller::run(){
 	if(timer->getInterval()>0 && timer->getTimeLeft()==0) {
 		reset();
 	} else {
-		ProcNode *node = &node;
-		while(node!=null) {
+		ProcNode *node = &procs;
+		while(node!=NULL) {
 			node->proc->actuator->act(node->proc->sensor->read());
 			node=node->next;
 		}
@@ -99,18 +100,21 @@ void Controller::addProc(Process *proc){
 
 	boolean alreadyAdded = false;
 	ProcNode *node = &procs;
-	while(node->next!=NULL) {
+	ProcNode *previous = &procs;
+	while(node!=NULL) {
 		if(node->proc->sensor == proc->sensor && node->proc->actuator == proc->actuator) {
 			alreadyAdded = true;
 			break;
 		}
+		previous = node;
 		node = node->next;
 	}
 
 	if(alreadyAdded) {
 		node->proc->ref_value = proc->ref_value;
 	} else {
-		node->next = new ProcNode(proc);
+		previous->next = new ProcNode(proc);
+		previous->next->next = NULL; //find out why I ned to put this here
 	}
 }
 
@@ -135,30 +139,43 @@ void Controller::addProc(Sensor *sensor, Actuator *actuator, float ref_value){
 	addProc(new Process(sensor, actuator, ref_value));
 }
 
-void Controller::setProc(unsigned i nt index, Sensor *sensor, Actuator *actuator, float ref_value){
+void Controller::setProc(unsigned int index, Sensor *sensor, Actuator *actuator, float ref_value){
 	setProc(index, new Process(sensor, actuator, ref_value));
 }
 
 void Controller::rmvProc(unsigned int index){
-	if(index >= getProcsNum())
+	if(index >= getProcsNum()) {
 		return;
-	if(procs.proc==NULL)
+	}
+	if(procs.proc==NULL) {
 		return;
+	}
+
+	boolean lastProc = (index == getProcsNum()-1);
 	
 	ProcNode *toDelete;
 	ProcNode *node = &procs;
 	if(index==0) {
 		toDelete = node;
-		procs = *(toDelete->next);
+		node = toDelete->next;
 	} else {
-		while(index >= 1) {
+		while(index > 1) {
 			index--;
 			node = node->next;
 		}
 		toDelete = node->next;
 		node->next = toDelete->next;
+		
+		if(lastProc) {
+			node->next = NULL;
+		}
 	}
 	delete toDelete;
+
+	if(index==0) {
+		procs.proc = node->proc;
+		procs.next = node->next;
+	}
 }
 
 Process Controller::getProc(unsigned int index){
@@ -170,9 +187,12 @@ Process Controller::getProc(unsigned int index){
 		index=getProcsNum()-1;
 	
 	ProcNode *node = &procs;
-	while(index > 0) node=node->next;
+	while(index > 0) {
+		node=node->next;
+		index--;
+	}
 	
-	Process *p = new Process(node->proc->sensor, node->proc->actuator, node->proc->ref_value)
+	Process *p = new Process(node->proc->sensor, node->proc->actuator, node->proc->ref_value);
 	return *p;
 }
 
@@ -191,7 +211,7 @@ unsigned int Controller::getProcsNum(){
 	unsigned int procs_num = 0;
 	ProcNode *node = &procs;
 	while(node!=NULL) {
-		procsNum++;
+		procs_num++;
 		node = node->next;
 	}
 
@@ -229,5 +249,13 @@ void Controller::deactivateAll() {
 	while(node!=NULL) {
 		node->proc->actuator->deactivate();
 		node=node->next;
+	}
+}
+
+void Controller::setActuators() {
+	ProcNode *node = &procs;
+	while(node!=NULL) {
+		node->proc->actuator->setRefValue(node->proc->ref_value);
+		node = node->next;
 	}
 }
