@@ -1,19 +1,21 @@
 #include <Arduino.h>
 #include <sensor.h>
 
-#ifndef detector_h
-#define detector_h
+#ifndef fakesensor_h
+#define fakesensor_h
 
-class Detector: public Sensor {
+class FakeSensor : public Sensor {
 public:
-	Detector(unsigned int pin);
-	~Detector();
+	FakeSensor();
+	~FakeSensor();
+
+	void setReading(float reading);
 
 	//interface methods
 	float read(); //gets the reading of the sensor
 	void calibrate(); //calibrate the sensor, whatever it means for a given sensor
 private:
-	unsigned int pin;
+	float reading;
 };
 
 #endif

@@ -1,20 +1,15 @@
 #include <controller.h>
-#include <ledactuator.h>
+#include <fakeactuator.h>
 #include <millistimer.h>
-#include <detector.h>
-
-#define LED 10
-#define BTN 0
-#define LED2 11
-#define BTN2 1
+#include <fakesensor.h>
 
 #define TLRNC 0.1
 #define REF 1.0
 
-Sensor *sn = new Detector(BTN);
-Actuator *led = new LedActuator(LED, TLRNC);
-Sensor *sn2 = new Detector(BTN2);
-Actuator *led2 = new LedActuator(LED2, TLRNC);
+FakeSensor *sn = new FakeSensor();
+FakeActuator *led = new FakeActuator();
+FakeSensor *sn2 = new FakeSensor();
+FakeActuator *led2 = new FakeActuator();
 
 Timer *timer = new MillisTimer();
 

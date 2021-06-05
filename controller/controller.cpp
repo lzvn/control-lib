@@ -226,7 +226,9 @@ unsigned int Controller::getProcsNum(){
 
 //Other methods
 unsigned int Controller::getTimeLeft(){
-	return timer->getTimeLeft();
+	unsigned int time_left = timer->getTimeLeft();
+	if(state==WORKING && time_left == 0) time_left = duration;
+	return time_left;
 }
 
 unsigned int Controller::getDuration(){

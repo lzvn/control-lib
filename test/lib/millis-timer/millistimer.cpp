@@ -25,7 +25,8 @@ void MillisTimer::start(unsigned int time_interval, void (*cb)()) {
 	time_when_stopped = time_ref;
 	this->time_interval = time_interval;
 	counting = true;
-	stopped = false;	
+	stopped = false;
+	this->cb = cb;
 
 	if(cb != NULL) {
 		unsigned long t = 1000*time_interval;
@@ -38,12 +39,18 @@ void MillisTimer::restart(){
 		return;
 	time_ref += seconds() - time_when_stopped;
 	time_when_stopped = time_ref;
+	stopped=false;
+	if(cb!=NULL) {
+		unsigned long t = 1000*(getTimeLeft());
+		Timer1.attachInterrupt(cb, t);
+	}
 }
 
 void MillisTimer::stop(){
 	if(!counting || stopped)
 		return;
 	time_when_stopped = seconds();
+	Timer1.detachInterrupt();
 	stopped = true;
 }
 
@@ -53,6 +60,8 @@ void MillisTimer::reset(){
 	time_when_stopped = 0;
 	counting = false;
 	stopped = false;
+	Timer1.detachInterrupt();
+	cb = NULL;
 }
 
 unsigned int MillisTimer::getTimeLeft(){

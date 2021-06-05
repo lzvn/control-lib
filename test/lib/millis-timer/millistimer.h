@@ -29,6 +29,7 @@ private:
 	
 
 	unsigned int seconds();
+	void (*cb)();
 };
 
 #endif

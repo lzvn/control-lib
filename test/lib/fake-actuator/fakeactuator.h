@@ -1,14 +1,14 @@
 #include <Arduino.h>
 #include <actuator.h>
 
-#ifndef ledactuator_h
-#define ledactuator_h
+#ifndef fakeactuator_h
+#define fakeactuator_h
 
-class LedActuator : public Actuator {
+class FakeActuator : public Actuator {
 public:
 
-	LedActuator(unsigned int pin, float tolerance);
-	~LedActuator();
+	FakeActuator();
+	~FakeActuator();
 
 	//interface methods
 	void act(float input); //acts according to the input
@@ -19,7 +19,6 @@ public:
 	void setRefValue(float ref_value);
 
 private:
-	unsigned int pin;
 	boolean active;
 	float ref_value;
 };
