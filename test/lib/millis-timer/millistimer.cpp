@@ -14,6 +14,10 @@ MillisTimer::~MillisTimer(){
 	
 //overridden methods, time in seconds
 void MillisTimer::start(unsigned int time_interval){
+	start(time_interval, NULL);
+}
+
+void MillisTimer::start(unsigned int time_interval, void (*cb)()) {
 	if(counting)
 		return;
 
@@ -21,7 +25,12 @@ void MillisTimer::start(unsigned int time_interval){
 	time_when_stopped = time_ref;
 	this->time_interval = time_interval;
 	counting = true;
-	stopped = false;
+	stopped = false;	
+
+	if(cb != NULL) {
+		unsigned long t = 1000*time_interval;
+		Timer1.attachInterrupt(cb, t);
+	}
 }
 
 void MillisTimer::restart(){

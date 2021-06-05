@@ -41,6 +41,7 @@ public:
 	~Controller();
 
 	//"control of the controller" (aka start, stop, etc)
+	boolean start(void (*cb)());
 	boolean start();
 	boolean restart();
 	boolean stop();
@@ -79,6 +80,7 @@ private:
 	float tolerance;
 	unsigned short state;
 	unsigned int duration;
+	void (*cb)();
 
 	void deactivateAll();
 	void setActuators();

@@ -6,6 +6,7 @@
 class Timer {
 public:
 	virtual void start(unsigned int time_interval) = 0; //starts the count, time_interval in seconds or minutes
+	virtual void start(unsigned int time_interval, void (*cb)()); //sets a callback to be called when the count is over
 	virtual void restart() = 0; //retakes a stopped count from where it stopped
 	virtual void stop() = 0;
 	virtual void reset() =  0;

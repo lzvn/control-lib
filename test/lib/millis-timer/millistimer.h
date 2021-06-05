@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <TimerOne.h>
 #include <timer.h>
 
 #ifndef millistimer_h
@@ -12,6 +13,7 @@ public:
 	
 	//overridden methods, time in seconds
 	void start(unsigned int time_interval); //starts the count, time_interval in seconds or minutes
+	void start(unsigned int time_interval, void (*cb)());
 	void restart(); //retakes a stopped count from where it stopped
 	void stop();
 	void reset();

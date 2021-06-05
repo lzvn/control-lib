@@ -49,6 +49,8 @@ void setup() {
 	printProc(ctrl->getProc(0));
 
 	ctrl->addProc(sn, led, 3);
+  Serial.print(F("Number of processes after adding the first to the end again: "));
+  Serial.println(ctrl->getProcsNum());
 	ctrl->rmvProc(1);
 	Serial.print(F("Number of processes after adding the first to the end and then deleting it again: "));
 	Serial.println(ctrl->getProcsNum());

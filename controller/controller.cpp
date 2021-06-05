@@ -32,7 +32,7 @@ Controller::~Controller() {
 }
 
 //"control of the controller" (aka start, stop, etc)
-boolean Controller::start() {
+boolean Controller::start(void (*cb)()) {
 	if(state!=REST)
 		return false;
 	if(procs.proc==NULL || timer==NULL)
@@ -41,7 +41,11 @@ boolean Controller::start() {
 	state=WORKING;
 	timer->reset();
 	setActuators();
-	return run();
+	this->cb = cb;
+	return run();	
+}
+boolean Controller::start() {
+	return start(NULL);
 }
 
 boolean Controller::restart() {
@@ -77,7 +81,7 @@ boolean Controller::run(){
 		float reading = procs.proc->sensor->read();
 		float ref_value = procs.proc->ref_value;
 		if(reading > ref_value*(1-tolerance) && reading < ref_value*(1+tolerance))
-			timer->start(duration);
+			timer->start(duration, cb);
 	}
 	if(timer->getInterval()>0 && timer->getTimeLeft()==0) {
 		reset();
@@ -170,6 +174,7 @@ void Controller::rmvProc(unsigned int index){
 			node->next = NULL;
 		}
 	}
+
 	delete toDelete;
 
 	if(index==0) {
